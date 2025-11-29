@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shadowlark/shadowlark-go/crypto"
-	"github.com/shadowlark/shadowlark-go/transport/frame"
-	"github.com/shadowlark/shadowlark-go/transport/handshake"
+	"github.com/Hawx-Drones/shadowlark-go/crypto"
+	"github.com/Hawx-Drones/shadowlark-go/transport/frame"
+	"github.com/Hawx-Drones/shadowlark-go/transport/handshake"
 )
 
 func TestSessionKeyDerivation(t *testing.T) {

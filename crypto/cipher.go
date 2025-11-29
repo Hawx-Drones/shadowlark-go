@@ -5,7 +5,7 @@ import (
 	"crypto/cipher"
 	"errors"
 
-	"github.com/shadowlark/shadowlark-go/transport/frame"
+	"github.com/Hawx-Drones/shadowlark-go/transport/frame"
 )
 
 const FlagEncrypted byte = 0x01

@@ -3,7 +3,7 @@ package frame
 import (
 	"testing"
 
-	"github.com/shadowlark/shadowlark-go/binary"
+	"github.com/Hawx-Drones/shadowlark-go/binary"
 )
 
 func TestFrameRoundtrip(t *testing.T) {

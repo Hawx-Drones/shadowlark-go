@@ -3,9 +3,9 @@ package router
 import (
 	"testing"
 
-	"github.com/shadowlark/shadowlark-go/app"
-	"github.com/shadowlark/shadowlark-go/transport/handshake"
-	"github.com/shadowlark/shadowlark-go/transport/session"
+	"github.com/Hawx-Drones/shadowlark-go/app"
+	"github.com/Hawx-Drones/shadowlark-go/transport/handshake"
+	"github.com/Hawx-Drones/shadowlark-go/transport/session"
 )
 
 func TestRouterHandshakeFlow(t *testing.T) {

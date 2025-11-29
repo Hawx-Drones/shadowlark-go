@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/shadowlark/shadowlark-go/app"
-	"github.com/shadowlark/shadowlark-go/transport/tcp"
+	"github.com/Hawx-Drones/shadowlark-go/app"
+	"github.com/Hawx-Drones/shadowlark-go/transport/tcp"
 )
 
 // A tiny demo client that connects to a Shadowlark relay, handshakes,

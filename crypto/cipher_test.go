@@ -3,7 +3,7 @@ package crypto
 import (
 	"testing"
 
-	"github.com/shadowlark/shadowlark-go/transport/frame"
+	"github.com/Hawx-Drones/shadowlark-go/transport/frame"
 )
 
 func TestEncryptDecryptRoundtrip(t *testing.T) {

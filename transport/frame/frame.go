@@ -3,7 +3,7 @@ package frame
 import (
 	"errors"
 
-	"github.com/shadowlark/shadowlark-go/binary"
+	"github.com/Hawx-Drones/shadowlark-go/binary"
 )
 
 const (

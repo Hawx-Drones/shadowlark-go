@@ -4,8 +4,8 @@ import (
 	"crypto/rand"
 	"errors"
 
-	"github.com/shadowlark/shadowlark-go/binary"
-	"github.com/shadowlark/shadowlark-go/transport/frame"
+	"github.com/Hawx-Drones/shadowlark-go/binary"
+	"github.com/Hawx-Drones/shadowlark-go/transport/frame"
 )
 
 const (
