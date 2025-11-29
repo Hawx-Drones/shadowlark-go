@@ -1,3 +1,3 @@
-module shadowlark-go
+module github.com/shadowlark/shadowlark-go
 
-go 1.25
+go 1.22
