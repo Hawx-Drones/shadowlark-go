@@ -1,0 +1,186 @@
+# This file is used to ignore files which are generated
+# ----------------------------------------------------------------------------
+
+*~
+*.autosave
+*.a
+*.core
+*.moc
+*.o
+*.obj
+*.orig
+*.rej
+*.so
+*.so.*
+*_pch.h.cpp
+*_resource.rc
+*.qm
+.#*
+*.*#
+core
+!core/
+tags
+.DS_Store
+.directory
+*.debug
+Makefile*
+*.prl
+*.app
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+Thumbs.db
+*.res
+*.rc
+/.qmake.cache
+/.qmake.stash
+
+# qtcreator generated files
+*.pro.user*
+*.qbs.user*
+CMakeLists.txt.user*
+
+# xemacs temporary files
+*.flc
+
+# Vim temporary files
+.*.swp
+
+# Visual Studio generated files
+*.ib_pdb_index
+*.idb
+*.ilk
+*.pdb
+*.sln
+*.suo
+*.vcproj
+*vcproj.*.*.user
+*.ncb
+*.sdf
+*.opensdf
+*.vcxproj
+*vcxproj.*
+
+# MinGW generated files
+*.Debug
+*.Release
+
+# Python byte code
+*.pyc
+
+# Binaries
+# --------
+*.dll
+*.exe
+
+# Directories with generated files
+.moc/
+.obj/
+.pch/
+.rcc/
+.uic/
+/build*/
+/cmake-build-debug/
+
+
+# macOS specific files
+.AppleDouble
+.LSOverride
+
+# macOS resource forks are not needed in repositories
+*.swp
+._*
+
+# Qt Creator specific files
+*.pro.user
+*.pro.user.*
+*.qmake.stash
+*.qmake.cache
+*.creator.user
+*.creator.user.*
+*.creator.shared.*
+*.csettings
+*.dsettings
+*.modeling
+*.layout
+*.includes
+*.files
+*.log
+*.workspace
+
+# Build artifacts
+build-*/
+*.dylib
+*.lib
+*.ds_store
+
+# Compiled binary files
+*.out
+*.xcodeproj
+
+# Backup files
+*.bak
+*.old
+
+# Generated files
+Makefile
+Makefile.*
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.cmake
+*.qrc.depends
+*.qmlproject
+*.qmlproject.user
+
+# Logs
+*.diff
+
+# Temporary and system files
+*.tmp
+*.temp
+*.#*
+
+# IDE-specific files
+.idea/
+.vscode/
+.qtcreator/
+
+# Node_modules (if using Node for any part of the project)
+node_modules/
+
+
+# Test binary, coverage reports, and other build artifacts
+*.test
+*.prof
+*.cover
+*.cov
+
+# Output of the `go build` and `go test` commands
+/build/
+/bin/
+/dist/
+
+# Dependency directories (e.g., vendor/)
+vendor/
+
+*.iml
+
+# Go module files
+go.sum
+go.work
+go.work.sum
+
+# Debugging and profiling data
+*.pprof
+
+# Generated documentation
+*.doc
+*.docx
+*.pdf
+
+# Config files for local development
+.env
+.env.*
+
+AGENTS.md
