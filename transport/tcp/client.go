@@ -20,11 +20,14 @@ const (
 	heartbeatTimeout  = 20 * time.Second
 )
 
-// Client is a blocking TCP client that speaks the Shadowlark V1 protocol.
 type Client struct {
 	conn              net.Conn
 	Session           *session.State
 	LastHeartbeatSent time.Time
+	localIdentity     *handshake.IdentityKeypair
+	localBundle       *handshake.IdentityBundle
+	trustStore        handshake.TrustStore
+	policy            handshake.HandshakePolicy
 }
 
 func Dial(addr string) (*Client, error) {
@@ -32,45 +35,117 @@ func Dial(addr string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	trust := handshake.AllowAnyTrustStore()
 	return &Client{
 		conn:              conn,
 		Session:           nil,
 		LastHeartbeatSent: time.Now(),
+		trustStore:        trust,
+		policy:            handshake.DefaultHandshakePolicy(),
 	}, nil
+}
+
+func (c *Client) SetSecureIdentity(localIdentity handshake.IdentityKeypair, localBundle handshake.IdentityBundle) {
+	identity := localIdentity
+	bundle := localBundle
+	c.localIdentity = &identity
+	c.localBundle = &bundle
+}
+
+func (c *Client) SetTrustStore(trustStore handshake.TrustStore) {
+	c.trustStore = trustStore
+}
+
+func (c *Client) SetHandshakePolicy(policy handshake.HandshakePolicy) {
+	c.policy = policy
 }
 
 func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-// Handshake performs the INIT/ACK exchange and populates Session.
-func (c *Client) Handshake(r *router.FrameRouter) error {
-	init, err := handshake.NewInit(0x01)
+func (c *Client) Handshake(_ *router.FrameRouter) error {
+	identity, bundle, err := c.ensureIdentityBundle()
 	if err != nil {
 		return err
 	}
-	initFrame := init.ToFrame()
-	if err := writeFrame(c.conn, initFrame); err != nil {
-		return err
-	}
-	if err := r.Dispatch(initFrame, &c.Session); err != nil {
+	return c.handshakeSecure(identity, bundle, c.trustStore, c.policy)
+}
+
+func (c *Client) HandshakeSecure(
+	localIdentity handshake.IdentityKeypair,
+	localBundle handshake.IdentityBundle,
+	trustStore handshake.TrustStore,
+	policy handshake.HandshakePolicy,
+) error {
+	return c.handshakeSecure(localIdentity, localBundle, trustStore, policy)
+}
+
+func (c *Client) handshakeSecure(
+	localIdentity handshake.IdentityKeypair,
+	localBundle handshake.IdentityBundle,
+	trustStore handshake.TrustStore,
+	policy handshake.HandshakePolicy,
+) error {
+	initiator, err := handshake.NewSecureInitiator(localIdentity, localBundle, trustStore, policy)
+	if err != nil {
 		return err
 	}
 
-	ackFrame, err := readFrame(c.conn)
+	clientHello, err := initiator.BuildClientHello()
 	if err != nil {
 		return err
 	}
-	if ackFrame.MsgType != handshake.MsgHandshakeAck {
-		return fmt.Errorf("expected HANDSHAKE_ACK, got %d", ackFrame.MsgType)
-	}
-	if err := r.Dispatch(ackFrame, &c.Session); err != nil {
+	if err := writeFrame(c.conn, clientHello); err != nil {
 		return err
 	}
+
+	serverHello, err := readFrame(c.conn)
+	if err != nil {
+		return err
+	}
+	if serverHello.MsgType != handshake.MsgServerHello {
+		return fmt.Errorf("expected MSG_SERVER_HELLO, got %d", serverHello.MsgType)
+	}
+	if err := initiator.HandleServerHello(serverHello, uint64(time.Now().Unix())); err != nil {
+		return err
+	}
+
+	clientFinish, err := initiator.BuildClientFinish()
+	if err != nil {
+		return err
+	}
+	if err := writeFrame(c.conn, clientFinish); err != nil {
+		return err
+	}
+
+	output, err := initiator.Finalize()
+	if err != nil {
+		return err
+	}
+	sess := session.FromHandshakeOutput(output)
+	c.Session = &sess
 	return nil
 }
 
-// MaybeSendHeartbeat writes a heartbeat if the interval elapsed.
+func (c *Client) ensureIdentityBundle() (handshake.IdentityKeypair, handshake.IdentityBundle, error) {
+	if c.localIdentity != nil && c.localBundle != nil {
+		return *c.localIdentity, *c.localBundle, nil
+	}
+
+	identity, err := handshake.GenerateIdentityKeypair()
+	if err != nil {
+		return handshake.IdentityKeypair{}, handshake.IdentityBundle{}, err
+	}
+	now := uint64(time.Now().Unix())
+	bundle, err := handshake.SignedIdentityBundle("shadowlark-go-client", now-60, now+86400, identity)
+	if err != nil {
+		return handshake.IdentityKeypair{}, handshake.IdentityBundle{}, err
+	}
+	c.SetSecureIdentity(identity, bundle)
+	return identity, bundle, nil
+}
+
 func (c *Client) MaybeSendHeartbeat() error {
 	if time.Since(c.LastHeartbeatSent) < heartbeatInterval {
 		return nil
@@ -95,7 +170,7 @@ func (c *Client) CheckTimeout() error {
 
 func (c *Client) SendEncrypted(f frame.Frame) error {
 	if c.Session == nil {
-		return errors.New("no session key yet")
+		return errors.New("no secure session established")
 	}
 	enc, err := c.Session.EncryptFrame(f)
 	if err != nil {
@@ -109,7 +184,7 @@ func (c *Client) SendEncrypted(f frame.Frame) error {
 
 func (c *Client) ReadEncrypted(r *router.FrameRouter) (frame.Frame, error) {
 	if c.Session == nil {
-		return frame.Frame{}, errors.New("no session key yet")
+		return frame.Frame{}, errors.New("no secure session established")
 	}
 	for {
 		raw, err := readFrame(c.conn)
@@ -129,7 +204,6 @@ func (c *Client) ReadEncrypted(r *router.FrameRouter) (frame.Frame, error) {
 	}
 }
 
-// writeFrame writes the frame header + payload.
 func writeFrame(w io.Writer, f frame.Frame) error {
 	enc := binary.NewEncoder()
 	f.Encode(enc)
@@ -137,7 +211,6 @@ func writeFrame(w io.Writer, f frame.Frame) error {
 	return err
 }
 
-// readFrame reads a complete frame from the stream.
 func readFrame(r io.Reader) (frame.Frame, error) {
 	header := make([]byte, 7)
 	if _, err := io.ReadFull(r, header); err != nil {
@@ -172,7 +245,6 @@ func readFrame(r io.Reader) (frame.Frame, error) {
 	}, nil
 }
 
-// NewAppRouter builds a router with default handlers + app inbox.
 func NewAppRouter(inbox app.Inbox) *router.FrameRouter {
 	return router.WithAppDefaults(inbox)
 }
