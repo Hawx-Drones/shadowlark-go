@@ -4,9 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Hawx-Drones/shadowlark-go/app"
-	"github.com/Hawx-Drones/shadowlark-go/crypto"
 	"github.com/Hawx-Drones/shadowlark-go/transport/frame"
-	"github.com/Hawx-Drones/shadowlark-go/transport/handshake"
 	"github.com/Hawx-Drones/shadowlark-go/transport/session"
 )
 
@@ -26,8 +24,6 @@ func New() *FrameRouter {
 
 func WithDefaults() *FrameRouter {
 	r := New()
-	r.RegisterHandler(handshake.MsgHandshakeInit, HandshakeInitHandler{})
-	r.RegisterHandler(handshake.MsgHandshakeAck, HandshakeAckHandler{})
 	r.RegisterHandler(frame.MsgHeartbeat, HeartbeatHandler{})
 	return r
 }
@@ -48,43 +44,6 @@ func (r *FrameRouter) Dispatch(f frame.Frame, sess **session.State) error {
 		return fmt.Errorf("no handler registered for msg_type %d", f.MsgType)
 	}
 	return h.Handle(f, sess)
-}
-
-// -------------------------
-// Built-in handlers
-// -------------------------
-
-type HandshakeInitHandler struct{}
-
-func (HandshakeInitHandler) Handle(f frame.Frame, sess **session.State) error {
-	init, err := handshake.InitFromFrame(f)
-	if err != nil {
-		return err
-	}
-	state := session.New(init.ClientNonce, [32]byte{}, [32]byte{})
-	*sess = &state
-	return nil
-}
-
-type HandshakeAckHandler struct{}
-
-func (HandshakeAckHandler) Handle(f frame.Frame, sess **session.State) error {
-	if sess == nil {
-		return fmt.Errorf("nil session pointer")
-	}
-	ack, err := handshake.AckFromFrame(f)
-	if err != nil {
-		return err
-	}
-	if *sess == nil {
-		return fmt.Errorf("received HANDSHAKE_ACK before HANDSHAKE_INIT")
-	}
-	s := *sess
-	s.ServerNonce = ack.ServerNonce
-	s.SessionKey = crypto.DeriveSessionKey(s.ClientNonce, ack.ServerNonce)
-	s.Touch()
-	*sess = s
-	return nil
 }
 
 type AppMessageHandler struct {

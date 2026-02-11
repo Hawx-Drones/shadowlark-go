@@ -182,6 +182,18 @@ go.work.sum
 # Config files for local development
 .env
 .env.*
+local.env
+local.env.*
+!local.env.example
+*.env.gpg
+*.env.age
+*.env.enc
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
 
 AGENTS.md
 .gocache/
