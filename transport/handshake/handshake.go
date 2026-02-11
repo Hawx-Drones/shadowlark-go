@@ -142,21 +142,12 @@ func (k IdentityKeypair) X25519SharedSecret(peerPublic [32]byte) ([32]byte, erro
 }
 
 type TrustStore struct {
-	allowAny bool
-	pinned   map[[32]byte]struct{}
+	pinned map[[32]byte]struct{}
 }
 
 func StrictTrustStore() TrustStore {
 	return TrustStore{
-		allowAny: false,
-		pinned:   make(map[[32]byte]struct{}),
-	}
-}
-
-func AllowAnyTrustStore() TrustStore {
-	return TrustStore{
-		allowAny: true,
-		pinned:   make(map[[32]byte]struct{}),
+		pinned: make(map[[32]byte]struct{}),
 	}
 }
 
@@ -168,9 +159,6 @@ func (t *TrustStore) Pin(publicKey [32]byte) {
 }
 
 func (t TrustStore) IsTrusted(publicKey [32]byte) bool {
-	if t.allowAny {
-		return true
-	}
 	_, ok := t.pinned[publicKey]
 	return ok
 }
